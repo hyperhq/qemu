@@ -687,7 +687,9 @@ static void migration_bitmap_sync(RAMState *rs)
     qemu_mutex_lock(&rs->bitmap_mutex);
     rcu_read_lock();
     RAMBLOCK_FOREACH(block) {
-        migration_bitmap_sync_range(rs, block, 0, block->used_length);
+        if (!migrate_bypass_shared_memory() || !qemu_ram_is_shared(block)) {
+            migration_bitmap_sync_range(rs, block, 0, block->used_length);
+        }
     }
     rcu_read_unlock();
     qemu_mutex_unlock(&rs->bitmap_mutex);
@@ -1912,6 +1914,12 @@ static int ram_state_init(RAMState *rs)
     rcu_read_lock();
     ram_state_reset(rs);
 
+    /*
+     * Reset it to zero and then count the total number of pages used by
+     * ram blocks not including any gaps due to alignment or unplugs.
+     */
+    rs->migration_dirty_pages = 0;
+
     /* Skip setting bitmap if there is no RAM */
     if (ram_bytes_total()) {
         RAMBlock *block;
@@ -1920,19 +1928,16 @@ static int ram_state_init(RAMState *rs)
             unsigned long pages = block->max_length >> TARGET_PAGE_BITS;
 
             block->bmap = bitmap_new(pages);
-            bitmap_set(block->bmap, 0, pages);
+            if (!migrate_bypass_shared_memory() || !qemu_ram_is_shared(block)) {
+                bitmap_set(block->bmap, 0, pages);
+                rs->migration_dirty_pages += pages;
+	    }
             if (migrate_postcopy_ram()) {
                 block->unsentmap = bitmap_new(pages);
-                bitmap_set(block->unsentmap, 0, pages);
+                bitmap_copy(block->unsentmap, block->bmap, pages);
             }
         }
     }
-
-    /*
-     * Count the total number of pages used by ram blocks not including any
-     * gaps due to alignment or unplugs.
-     */
-    rs->migration_dirty_pages = ram_bytes_total() >> TARGET_PAGE_BITS;
 
     memory_global_dirty_log_start();
     migration_bitmap_sync(rs);

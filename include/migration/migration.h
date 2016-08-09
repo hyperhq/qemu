@@ -239,6 +239,7 @@ int ram_postcopy_incoming_init(MigrationIncomingState *mis);
 void ram_postcopy_migrated_memory_release(MigrationState *ms);
 
 bool migrate_release_ram(void);
+bool migrate_bypass_shared_memory(void);
 bool migrate_postcopy_ram(void);
 bool migrate_zero_blocks(void);
 
