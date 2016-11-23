@@ -143,6 +143,8 @@ static void virtio_9p_device_realize(DeviceState *dev, Error **errp)
     register_savevm(dev, "virtio-9p", -1, 1, virtio_9p_save, virtio_9p_load, s);
     return;
 out:
+    if (s->ops && s->ops->cleanup)
+        s->ops->cleanup(&s->ctx);
     g_free(s->ctx.fs_root);
     g_free(s->tag);
     virtio_cleanup(vdev);
@@ -154,6 +156,8 @@ static void virtio_9p_device_unrealize(DeviceState *dev, Error **errp)
     VirtIODevice *vdev = VIRTIO_DEVICE(dev);
     V9fsState *s = VIRTIO_9P(dev);
 
+    if (s->ops && s->ops->cleanup)
+        s->ops->cleanup(&s->ctx);
     virtio_cleanup(vdev);
     unregister_savevm(dev, "virtio-9p", s);
     g_free(s->ctx.fs_root);
