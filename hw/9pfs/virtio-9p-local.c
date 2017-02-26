@@ -354,10 +354,15 @@ static int local_open(FsContext *ctx, V9fsPath *fs_path,
 {
     char *buffer;
     char *path = fs_path->data;
+    int fd;
 
     buffer = rpath(ctx, path);
-    fs->fd = open(buffer, flags | O_NOFOLLOW);
+    fd = open(buffer, flags | O_NOFOLLOW);
     g_free(buffer);
+    if (fd == -1) {
+        return -1;
+    }
+    fs->fd = fd;
     return fs->fd;
 }
 
@@ -366,13 +371,15 @@ static int local_opendir(FsContext *ctx,
 {
     char *buffer;
     char *path = fs_path->data;
+    DIR *stream;
 
     buffer = rpath(ctx, path);
-    fs->dir = opendir(buffer);
+    stream = opendir(buffer);
     g_free(buffer);
-    if (!fs->dir) {
+    if (!stream) {
         return -1;
     }
+    fs->dir = stream;
     return 0;
 }
 
