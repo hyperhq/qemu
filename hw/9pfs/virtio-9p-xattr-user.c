@@ -21,9 +21,6 @@
 static ssize_t mp_user_getxattr(FsContext *ctx, const char *path,
                                 const char *name, void *value, size_t size)
 {
-    char *buffer;
-    ssize_t ret;
-
     if (strncmp(name, "user.virtfs.", 12) == 0) {
         /*
          * Don't allow fetch of user.virtfs namesapce
@@ -32,10 +29,7 @@ static ssize_t mp_user_getxattr(FsContext *ctx, const char *path,
         errno = ENOATTR;
         return -1;
     }
-    buffer = rpath(ctx, path);
-    ret = lgetxattr(buffer, name, value, size);
-    g_free(buffer);
-    return ret;
+    return local_getxattr_nofollow(ctx, path, name, value, size);
 }
 
 static ssize_t mp_user_listxattr(FsContext *ctx, const char *path,
@@ -74,9 +68,6 @@ static ssize_t mp_user_listxattr(FsContext *ctx, const char *path,
 static int mp_user_setxattr(FsContext *ctx, const char *path, const char *name,
                             void *value, size_t size, int flags)
 {
-    char *buffer;
-    int ret;
-
     if (strncmp(name, "user.virtfs.", 12) == 0) {
         /*
          * Don't allow fetch of user.virtfs namesapce
@@ -85,18 +76,12 @@ static int mp_user_setxattr(FsContext *ctx, const char *path, const char *name,
         errno = EACCES;
         return -1;
     }
-    buffer = rpath(ctx, path);
-    ret = lsetxattr(buffer, name, value, size, flags);
-    g_free(buffer);
-    return ret;
+    return local_setxattr_nofollow(ctx, path, name, value, size, flags);
 }
 
 static int mp_user_removexattr(FsContext *ctx,
                                const char *path, const char *name)
 {
-    char *buffer;
-    int ret;
-
     if (strncmp(name, "user.virtfs.", 12) == 0) {
         /*
          * Don't allow fetch of user.virtfs namesapce
@@ -105,10 +90,7 @@ static int mp_user_removexattr(FsContext *ctx,
         errno = EACCES;
         return -1;
     }
-    buffer = rpath(ctx, path);
-    ret = lremovexattr(buffer, name);
-    g_free(buffer);
-    return ret;
+    return local_removexattr_nofollow(ctx, path, name);
 }
 
 XattrOperations mapped_user_xattr = {
