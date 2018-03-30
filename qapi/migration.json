@@ -352,12 +352,17 @@
 #
 # @x-multifd: Use more than one fd for migration (since 2.11)
 #
+# @bypass-shared-memory: the shared memory region will be bypassed on migration.
+#          This feature allows the memory region to be reused by new qemu(s)
+#          or be migrated separately. (since 2.12)
+#
 # Since: 1.2
 ##
 { 'enum': 'MigrationCapability',
   'data': ['xbzrle', 'rdma-pin-all', 'auto-converge', 'zero-blocks',
            'compress', 'events', 'postcopy-ram', 'x-colo', 'release-ram',
-           'block', 'return-path', 'pause-before-switchover', 'x-multifd' ] }
+           'block', 'return-path', 'pause-before-switchover', 'x-multifd',
+           'bypass-shared-memory'] }
 
 ##
 # @MigrationCapabilityStatus:
@@ -412,6 +417,7 @@
 #       {"state": true, "capability": "events"},
 #       {"state": false, "capability": "postcopy-ram"},
 #       {"state": false, "capability": "x-colo"}
+#       {"state": false, "capability": "bypass-shared-memory"}
 #    ]}
 #
 ##
